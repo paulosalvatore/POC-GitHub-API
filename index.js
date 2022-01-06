@@ -6,6 +6,9 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const fs = require("fs");
 
+// Axios
+const axios = require("axios");
+
 // Express
 const express = require("express");
 
@@ -23,19 +26,21 @@ const publicKey = pubKeyObject.export({
     type: "spki",
 });
 
-const issuer = "Issuer";
-const subject = "Subject";
-const audience = "audience";
+const issuer = "162974";
+const subject = "salvatoregames@gmail.com";
+const audience = "https://poc-github-api.herokuapp.com/";
+const expiresIn = "10m";
+const algorithm = "RS256";
 
 const signOptions = {
     issuer,
     subject,
     audience,
-    expiresIn: "12h",
-    algorithm: "RS256",
+    expiresIn,
+    algorithm,
 };
 
-const payload = { data: "some data" };
+const payload = {};
 
 const tokenFromPem = jwt.sign(payload, privateKey, signOptions);
 
@@ -45,8 +50,8 @@ const verifyOptions = {
     issuer,
     subject,
     audience,
-    expiresIn: "12h",
-    algorithm: ["RS256"],
+    expiresIn,
+    algorithm,
 };
 
 const legit = jwt.verify(tokenFromPem, publicKey, verifyOptions);
@@ -54,6 +59,19 @@ const legit = jwt.verify(tokenFromPem, publicKey, verifyOptions);
 console.log({ legit });
 
 const githubApiToken = process.env.GITHUB_API_TOKEN;
+
+// GitHub API
+
+axios.get("https://api.github.com/app", {
+    headers: {
+        Authorization: `Bearer ${tokenFromPem}`,
+        Accept: "application/vnd.github.v3+json",
+    },
+}).then((response) => {
+    console.log(response.data);
+}).catch((error) => {
+    console.error(error.message);
+});
 
 // Express App
 
