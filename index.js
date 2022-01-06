@@ -78,7 +78,26 @@ axios.get("https://api.github.com/app", {
 const app = express();
 
 app.get("/", (req, res) => {
-    res.send("Hello World");
+  res.send("Hello World");
+});
+
+app.get("/login", (req, res) => {
+  const url = new URL(`https://github.com/login/oauth/authorize`);
+
+  url.searchParams.append("client_id", clientId);
+  url.searchParams.append(
+    "redirect_uri",
+    "https://poc-github-api.herokuapp.com/callback-url"
+  );
+  url.searchParams.append("state", "random_string");
+  url.searchParams.append("login", "dikiwov360");
+  // url.searchParams.append("login", "salvatoregames@gmail.com");
+
+  res.send(`<a href="${url}">Login</a>`);
+});
+
+app.get("/callback-url", (req, res) => {
+  console.log("Callback URL");
 });
 
 app.listen(process.env.PORT || 3000);
