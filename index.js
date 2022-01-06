@@ -126,21 +126,13 @@ app.get('/callback-url', (req, res) => {
     axios
         .post(accessTokenUrl.toString())
         .then(response => {
-            // const accessToken = response.data.access_token;
-            // const tokenType = response.data.token_type;
-
-            // const userUrl = new URL('https://api.github.com/user');
-
-            // userUrl.searchParams.append('access_token', accessToken);
-            // userUrl.searchParams.append('token_type', tokenType);
-
-            // axios.get(userUrl).then(response => {
-            //     console.log(response.data);
-            //     res.send(response.data);
-            // });
+            const accessToken = response.data.access_token;
+            const tokenType = response.data.token_type;
 
             res.send({
                 data: response.data,
+                accessToken,
+                tokenType,
             });
         })
         .catch(error => {
@@ -149,5 +141,89 @@ app.get('/callback-url', (req, res) => {
             res.send(error.message);
         });
 });
+
+// Tests with User Data
+
+const userTokenRawData =
+    'access_token=ghu_9X1fslzEm6EVieyzQ9HFEMaqhNRblR1VoNBH&expires_in=28800&refresh_token=ghr_gJDH8YXBOXEEVzzL61zb5Wgiwsr7Mb1zYDLoGqDd5PKPNmOW45Ty03nrFdkd538helrtmc4XYVfn&refresh_token_expires_in=15638400&scope=&token_type=bearer';
+
+const userTokenData = userTokenRawData.split('&').reduce(
+    (acc, curr) => {
+        const [key, value] = curr.split('=');
+
+        acc[key] = value;
+
+        return acc;
+    },
+    {
+        access_token: undefined,
+        token_type: undefined,
+    },
+);
+
+// const userUrl = new URL('https://api.github.com/users/bluemer-test/orgs');
+const userUrl = new URL('https://api.github.com/user/orgs');
+
+// const accessToken = userTokenData.access_token;
+const accessToken = githubApiToken;
+
+const tokenType = userTokenData.token_type;
+
+// userUrl.searchParams.append('access_token', accessToken);
+// userUrl.searchParams.append('token_type', tokenType);
+// (async () => {
+//     try {
+//         const response = await axios.get(userUrl.toString(), {
+//             headers: {
+//                 Authorization: `${tokenType} ${accessToken}`,
+//             },
+//         });
+//
+//         console.log(response.data);
+//     } catch (error) {
+//         console.error(error.message);
+//     }
+// })();
+
+const BASE_URL = 'https://api.github.com';
+
+const org = 'blue-edtech-team';
+const team_slug = 'bluemers';
+const username = 'bluemer-test';
+
+const membershipUrl = new URL(
+    `${BASE_URL}/orgs/${org}/teams/${team_slug}/memberships/${username}`,
+);
+
+(async () => {
+    try {
+        console.log({ membershipUrl: membershipUrl.toString() });
+
+        const response = await axios.put(
+            membershipUrl.toString(),
+            {
+                role: 'member',
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    Accept: 'application/vnd.github.v3+json',
+                    ContentType: 'application/json',
+                },
+            },
+        );
+
+        console.log(response.data);
+    } catch (error) {
+        console.error(
+            'Error updating membership:',
+            error.message,
+            error.response.data,
+        );
+    }
+})();
+
+// TODO: Maybe we need to receive a WebHook from GitHub to know when the membership is updated
+// TODO: After that, we need to add the user to the team according to user's class (aka M1-LAP)
 
 app.listen(process.env.PORT || 3000);
