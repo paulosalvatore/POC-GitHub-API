@@ -47,7 +47,7 @@ const payload = {};
 
 const tokenFromPem = jwt.sign(payload, privateKey, signOptions);
 
-console.log({ tokenFromPem });
+// console.log({ tokenFromPem });
 
 const verifyOptions = {
     issuer,
@@ -59,7 +59,7 @@ const verifyOptions = {
 
 const legit = jwt.verify(tokenFromPem, publicKey, verifyOptions);
 
-console.log({ legit });
+// console.log({ legit });
 
 const githubApiToken = process.env.GITHUB_API_TOKEN;
 
@@ -73,7 +73,8 @@ axios
         },
     })
     .then(response => {
-        console.log(response.data);
+        console.log('Successfully authenticated with GitHub API');
+        // console.log(response.data);
     })
     .catch(error => {
         console.error(error.message);
@@ -88,7 +89,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    const url = new URL(`https://github.com/login/oauth/authorize`);
+    const url = new URL('https://github.com/login/oauth/authorize');
 
     url.searchParams.append('client_id', clientId);
     url.searchParams.append(
@@ -96,14 +97,56 @@ app.get('/login', (req, res) => {
         'https://poc-github-api.herokuapp.com/callback-url',
     );
     url.searchParams.append('state', 'random_string');
-    url.searchParams.append('login', 'dikiwov360');
+    url.searchParams.append('login', 'bluemer-test');
     // url.searchParams.append("login", "salvatoregames@gmail.com");
 
     res.send(`<a href="${url}">Login</a>`);
 });
 
 app.get('/callback-url', (req, res) => {
-    console.log('Callback URL');
+    const code = req.query.code;
+    const state = req.query.state;
+
+    const accessTokenUrl = new URL(
+        'https://github.com/login/oauth/access_token',
+    );
+
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+
+    accessTokenUrl.searchParams.append('client_id', clientId);
+    accessTokenUrl.searchParams.append('client_secret', clientSecret);
+    accessTokenUrl.searchParams.append('code', code);
+    accessTokenUrl.searchParams.append(
+        'redirect_uri',
+        'https://poc-github-api.herokuapp.com/callback-url',
+    );
+    accessTokenUrl.searchParams.append('state', state);
+
+    axios
+        .post(accessTokenUrl.toString())
+        .then(response => {
+            // const accessToken = response.data.access_token;
+            // const tokenType = response.data.token_type;
+
+            // const userUrl = new URL('https://api.github.com/user');
+
+            // userUrl.searchParams.append('access_token', accessToken);
+            // userUrl.searchParams.append('token_type', tokenType);
+
+            // axios.get(userUrl).then(response => {
+            //     console.log(response.data);
+            //     res.send(response.data);
+            // });
+
+            res.send({
+                data: response.data,
+            });
+        })
+        .catch(error => {
+            console.error(error.message);
+
+            res.send(error.message);
+        });
 });
 
 app.listen(process.env.PORT || 3000);
