@@ -17,27 +17,30 @@ const express = require("express");
 const privateKey = fs.readFileSync("./pem/private-key.pem");
 
 const pubKeyObject = crypto.createPublicKey({
-    key: privateKey,
-    format: "pem",
+  key: privateKey,
+  format: "pem",
 });
 
 const publicKey = pubKeyObject.export({
-    format: "pem",
-    type: "spki",
+  format: "pem",
+  type: "spki",
 });
 
-const issuer = "162974";
+const appId = "162974";
+const clientId = "Iv1.e643fd1328e57814";
+
+const issuer = appId;
 const subject = "salvatoregames@gmail.com";
 const audience = "https://poc-github-api.herokuapp.com/";
 const expiresIn = "10m";
 const algorithm = "RS256";
 
 const signOptions = {
-    issuer,
-    subject,
-    audience,
-    expiresIn,
-    algorithm,
+  issuer,
+  subject,
+  audience,
+  expiresIn,
+  algorithm,
 };
 
 const payload = {};
@@ -47,11 +50,11 @@ const tokenFromPem = jwt.sign(payload, privateKey, signOptions);
 console.log({ tokenFromPem });
 
 const verifyOptions = {
-    issuer,
-    subject,
-    audience,
-    expiresIn,
-    algorithm,
+  issuer,
+  subject,
+  audience,
+  expiresIn,
+  algorithm,
 };
 
 const legit = jwt.verify(tokenFromPem, publicKey, verifyOptions);
@@ -62,16 +65,19 @@ const githubApiToken = process.env.GITHUB_API_TOKEN;
 
 // GitHub API
 
-axios.get("https://api.github.com/app", {
+axios
+  .get("https://api.github.com/app", {
     headers: {
-        Authorization: `Bearer ${tokenFromPem}`,
-        Accept: "application/vnd.github.v3+json",
+      Authorization: `Bearer ${tokenFromPem}`,
+      Accept: "application/vnd.github.v3+json",
     },
-}).then((response) => {
+  })
+  .then((response) => {
     console.log(response.data);
-}).catch((error) => {
+  })
+  .catch((error) => {
     console.error(error.message);
-});
+  });
 
 // Express App
 
