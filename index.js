@@ -14,7 +14,8 @@ const express = require('express');
 
 // Auth
 
-const privateKey = fs.readFileSync('./pem/private-key.pem');
+const privateKeyBase64 = Buffer.from(process.env.GITHUB_PEM, 'base64');
+const privateKey = privateKeyBase64.toString('ascii');
 
 const pubKeyObject = crypto.createPublicKey({
     key: privateKey,
